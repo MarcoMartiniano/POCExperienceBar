@@ -8,4 +8,6 @@ data class HomeState(
     val barExperience: Float = 500f,
     val textExperience: Float = 500f,
     val progression: Progression? = Progression.NEWBIE,
+    val targetWordsNumber: Float = 0f,
+    val totalWordsNumber: Float? = null,
 )

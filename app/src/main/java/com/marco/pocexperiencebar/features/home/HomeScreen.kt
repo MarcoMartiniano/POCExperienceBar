@@ -26,7 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.marco.pocexperiencebar.core.uikit.components.ExperienceBar
 import com.marco.pocexperiencebar.core.uikit.components.ExperienceCircle
-import com.marco.pocexperiencebar.domain.model.Progression
+import com.marco.pocexperiencebar.core.uikit.components.QuizProgressBar
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
@@ -50,6 +50,10 @@ fun HomeScreenFactory(viewModel: HomeViewModel) {
         val viewState by viewModel.state.collectAsState()
 
         val progression = viewState.progression
+
+        LaunchedEffect(Unit) {
+            action(HomeViewAction.Set.WordNumber(totalWordsNumber = 60f, targetWordsNumber = 40f))
+        }
 
         ExperienceCircle(
             circleSize = 100.dp,
@@ -77,6 +81,11 @@ fun HomeScreenFactory(viewModel: HomeViewModel) {
         }) {
             Text(text = "Clique to start animation")
         }
+        Spacer(modifier = Modifier.height(32.dp))
+        QuizProgressBar(
+            maxValue = viewState.totalWordsNumber ?: 0f,
+            currentValue = viewState.targetWordsNumber
+        )
     }
 }
 

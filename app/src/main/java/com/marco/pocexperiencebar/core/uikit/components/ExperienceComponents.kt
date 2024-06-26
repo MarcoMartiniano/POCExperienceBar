@@ -1,7 +1,10 @@
 package com.marco.pocexperiencebar.core.uikit.components
 
 import android.graphics.Paint
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,15 +29,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.marco.pocexperiencebar.core.uikit.utils.toDp
 
 
 @Composable
@@ -149,6 +160,109 @@ fun ExperienceBar(
         textAlign = TextAlign.End
     )
 }
+
+
+@Composable
+fun QuizProgressBar(
+    modifier: Modifier = Modifier,
+    maxValue: Float,
+    currentValue: Float,
+    progressColor: Color = Color(0xFFFFD700), // Gold
+) {
+    // Avoid division by zero and ensure progress is valid
+    val safeMaxValue = if (maxValue > 0) maxValue else 1f
+    val safeCurrentValue = if (currentValue.isNaN() || currentValue < 0) 0f else currentValue
+    val progress by animateFloatAsState(
+        targetValue = (safeCurrentValue / safeMaxValue),
+        animationSpec = tween(durationMillis = 2000), // Slowing down the animation
+        label = ""
+    )
+
+    val textWidth by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val paddingHorizontalColumn = 24.dp
+    val paddingHorizontalTotal = 48.dp
+    val paddingLinearProgressIndicator = 12.dp
+    val paddingLinearProgressIndicatorTotal = 24.dp
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = paddingHorizontalColumn)
+    ) {
+        LinearProgressIndicator(
+            modifier = Modifier
+                .padding(horizontal = paddingLinearProgressIndicator)
+                .height(10.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp)),
+            progress = progress,
+            color = progressColor,
+            trackColor = Color.Gray.copy(alpha = 0.3f)
+        )
+
+        val screenWidth = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+        val halfTextWidth = textWidth / 2
+        val maxOffset =
+            screenWidth.toDp() - paddingHorizontalTotal - paddingLinearProgressIndicatorTotal - halfTextWidth
+
+        IconText(
+            maxOffset = maxOffset,
+            progress = progress,
+            density = density,
+            textWidth = textWidth,
+            paddingLinearProgressIndicator = paddingLinearProgressIndicator
+        )
+    }
+}
+
+@Composable
+fun IconText(
+    maxOffset: Dp,
+    progress: Float,
+    density: Density,
+    textWidth: Dp,
+    paddingLinearProgressIndicator: Dp,
+) {
+    var textWidthState by remember { mutableStateOf(textWidth) }
+
+    Column(
+        modifier = Modifier
+            .offset(
+                x = (maxOffset * progress) + paddingLinearProgressIndicator - textWidthState.div(
+                    2
+                )
+            )
+            .background(Color.Transparent),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Canvas(
+            modifier = Modifier
+                .size(12.dp)
+                .background(Color.Transparent)
+        ) {
+            val path = Path().apply {
+                moveTo(size.width / 2, 0f) // Start at the top
+                lineTo(0f, size.height) // Bottom-left vertex
+                lineTo(size.width, size.height) // Bottom-right vertex
+                close()
+            }
+            drawPath(path, color = Color.Red)
+        }
+
+        Text(
+            modifier = Modifier
+                .onGloballyPositioned { coordinates ->
+                    textWidthState = with(density) { coordinates.size.width.toDp() }
+                },
+            text = "${(progress * 100).toInt()}%",
+            fontSize = 12.sp,
+            color = Color.Black
+        )
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable

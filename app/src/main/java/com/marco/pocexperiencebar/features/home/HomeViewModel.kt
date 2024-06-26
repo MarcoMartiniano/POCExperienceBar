@@ -20,6 +20,20 @@ class HomeViewModel : ViewModel() {
                     experience = viewAction.experience
                 )
             }
+
+            is HomeViewAction.Set.WordNumber -> updateWordNumber(
+                totalWordsNumber = viewAction.totalWordsNumber,
+                targetWordsNumber = viewAction.targetWordsNumber
+            )
+        }
+    }
+
+    private fun updateWordNumber(totalWordsNumber: Float, targetWordsNumber: Float) {
+        _state.update {
+            it.copy(
+                totalWordsNumber = totalWordsNumber,
+                targetWordsNumber = targetWordsNumber
+            )
         }
     }
 
